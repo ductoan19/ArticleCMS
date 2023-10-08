@@ -93,7 +93,7 @@ def authorized():
         authResult = _msal_app(cache=tokenCache).acquire_token_by_authorization_code(
             code=request.args['code'],
             scopes=app.config['SCOPE'] or [],
-            redirect_uri=url_for('authorized', _external=True))
+            redirect_uri=url_for('authorized', _schema=app.config['HTTP_SCHEMA'], _external=True))
         if "error" in authResult:
             app.logger.error(authResult["error"])
             return render_template("auth_error.html", result=authResult)
@@ -151,4 +151,4 @@ def _auth_url(authority=None, scopes=None, state=None):
     return _msal_app(authority=authority).get_authorization_request_url(
         app.config['SCOPE'] or [],
         state=state or str(uuid.uuid4()),
-        redirect_uri=url_for('authorized', _external=True))
+        redirect_uri=url_for('authorized', _schema=app.config['HTTP_SCHEMA'], _external=True))

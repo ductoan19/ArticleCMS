@@ -21,5 +21,6 @@ class Config(object):
     AUTHORITY = os.environ.get('AUTHORITY')
     REDIRECT_PATH = "/getAToken"
     SCOPE = os.environ.get('SCOPE') or ["User.Read"]
+    HTTP_SCHEMA = os.environ.get('HTTP_SCHEMA') or 'https'
 
     SESSION_TYPE = "filesystem" 
