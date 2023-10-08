@@ -33,6 +33,7 @@ def new_post():
     if form.validate_on_submit():
         post = Post()
         post.save_changes(form, request.files['image_path'], current_user.id, new=True)
+        app.logger.info(f'Post created by {current_user.username}')
         return redirect(url_for('home'))
     return render_template(
         'post.html',
@@ -52,8 +53,8 @@ def post(id):
     form = PostForm(formdata=request.form, obj=post)
     if form.validate_on_submit():
         post.save_changes(form, request.files['image_path'], current_user.id)
+        app.logger.info(f'Post {id} is updated by {current_user.username}')
         return redirect(url_for('home'))
-    app.logger.info(f'New port created by {current_user.username}')
     return render_template(
         'post.html',
         title='Edit Post',
@@ -82,15 +83,19 @@ def login():
 
 @app.route(Config.REDIRECT_PATH)  # Its absolute URL must match your app's redirect_uri set in AAD
 def authorized():
+    if request.args.get('state') != session.get('state'):
+        return redirect(url_for('home'))
     if "error" in request.args:
-        app.logger.warning(request.args["error"])
+        app.logger.error(request.args["error"])
         return render_template("auth_error.html", result=request.args)
-    if request.args.get('code'):
+    if 'code' in request.args:
         tokenCache = _load_token_cache()
-        authResult = _msal_app(cache=tokenCache).acquire_token_by_auth_code_flow(
-            _auth_code_flow(),
-            request.args)
+        authResult = _msal_app(cache=tokenCache).acquire_token_by_authorization_code(
+            code=request.args['code'],
+            scopes=app.config['SCOPE'] or [],
+            redirect_uri=url_for('authorized', _external=True))
         if "error" in authResult:
+            app.logger.error(authResult["error"])
             return render_template("auth_error.html", result=authResult)
         session["user"] = authResult.get("id_token_claims")
         username = session["user"]["name"]
@@ -142,14 +147,8 @@ def _msal_app(cache=None, authority=None): # Singleton
         client_credential=app.config['CLIENT_SECRET']))
     return g.msalApp
 
-def _auth_code_flow(authority=None):
-    if('authCodeFlow' in session):
-        return session['authCodeFlow']
-    authCodeFlow = _msal_app(authority=authority).initiate_auth_code_flow(
-        app.config['SCOPE'] or [],
-        redirect_uri=url_for('authorized', _external=True))
-    session['authCodeFlow'] = authCodeFlow
-    return session['authCodeFlow']
-
 def _auth_url(authority=None, scopes=None, state=None):
-    return _auth_code_flow(authority)['auth_uri']
+    return _msal_app(authority=authority).get_authorization_request_url(
+        app.config['SCOPE'] or [],
+        state=state or str(uuid.uuid4()),
+        redirect_uri=url_for('authorized', _external=True))
