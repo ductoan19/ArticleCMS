@@ -77,7 +77,7 @@ def login():
             next_page = url_for('home')
         return redirect(next_page)
     session["state"] = str(uuid.uuid4())
-    auth_url = _auth_url(scopes=Config.SCOPE, state=session["state"])
+    auth_url = _auth_url(authority=app.config['AUTHORITY'], scopes=Config.SCOPE, state=session["state"])
     return render_template('login.html', title='Sign In', form=form, auth_url=auth_url)
 
 @app.route(Config.REDIRECT_PATH)  # Its absolute URL must match your app's redirect_uri set in AAD
@@ -145,7 +145,7 @@ def _msal_app(cache=None, authority=None): # Singleton
 def _auth_code_flow(authority=None):
     if('authCodeFlow' in session):
         return session['authCodeFlow']
-    authCodeFlow = _msal_app(authority).initiate_auth_code_flow(
+    authCodeFlow = _msal_app(authority=authority).initiate_auth_code_flow(
         app.config['SCOPE'] or [],
         redirect_uri=url_for('authorized', _external=True))
     session['authCodeFlow'] = authCodeFlow
