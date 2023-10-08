@@ -11,7 +11,10 @@ from flask_login import current_user, login_user, logout_user, login_required
 from FlaskWebProject.models import User, Post
 from msal import ConfidentialClientApplication, SerializableTokenCache
 import uuid
+import logging
 
+logging.basicConfig(level=logging.INFO)
+app.logger.addHandler(logging.StreamHandler())
 imageSourceUrl = 'https://'+ app.config['BLOB_ACCOUNT']  + '.blob.core.windows.net/' + app.config['BLOB_CONTAINER']  + '/'
 
 @app.route('/')
