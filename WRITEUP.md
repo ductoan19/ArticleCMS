@@ -1,12 +1,24 @@
-# Write-up Template
+### Cost
+* Both: Depend on the resource consumtion, but the app service is more predictable
+* VM: Can be reduce if VM is OFF
+* App Service: Always change
 
-### Analyze, choose, and justify the appropriate resource option for deploying the app.
+### Scalability
+* VM: Support both scaling up and out, manual or auto scaling
+* App service: Support both scaling up and out, built-in auto scaling out
 
-*For **both** a VM or App Service solution for the CMS app:*
-- *Analyze costs, scalability, availability, and workflow*
-- *Choose the appropriate solution (VM or App Service) for deploying the app*
-- *Justify your choice*
+## Compatiilities
+* VM: We can do anything with a OS, python is compatible and well support with Linx
+* App service: Support many techologies, languages and runtimes, Python is also supported
 
-### Assess app changes that would change your decision.
+### Management:
+* VM: Requires more effort (setup, security...)
 
-*Detail how the app and any other needs would have to change for you to change your decision in the last section.* 
+### High availability
+* VM: Manual setup: scale set or availabitity zones
+* App service: Load balancing, redundant are built in
+
+### Deployment
+* App service is more easier while VM requires more effort
+
+=> Choose app service
