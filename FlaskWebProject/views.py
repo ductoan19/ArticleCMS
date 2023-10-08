@@ -2,7 +2,6 @@
 Routes and views for the flask application.
 """
 
-from datetime import datetime
 from flask import render_template, flash, redirect, request, session, url_for, g, abort
 from werkzeug.urls import url_parse
 from config import Config
@@ -48,11 +47,13 @@ def new_post():
 def post(id):
     post = Post.query.filter_by(id=id).first_or_404()
     if (post.user_id != current_user.id):
+        app.logger.warning(f'User {current_user.username} does not have access to post {id}')
         abort(403)
     form = PostForm(formdata=request.form, obj=post)
     if form.validate_on_submit():
         post.save_changes(form, request.files['image_path'], current_user.id)
         return redirect(url_for('home'))
+    app.logger.info(f'New port created by {current_user.username}')
     return render_template(
         'post.html',
         title='Edit Post',
@@ -95,17 +96,22 @@ def authorized():
         username = session["user"]["name"]
         user = User.query.filter_by(username=username).first()
         if (user is None):
+            app.logger.info(f'Appending new user {session["user"]["name"]}')
             user = User()
             user.username = session["user"]["name"]
             user.set_password(str(uuid.uuid4())) # Random password, this user always login by MS account
             db.session.add(user)
             db.session.commit()
-        login_user(user)            
+            app.logger.info(f'User {session["user"]["name"]} was added to DB')
+        login_user(user)          
         _save_token_cache(tokenCache)
+    
+    app.logger.info(f'User {user.username} logged in successfully')
     return redirect(url_for('home'))
 
 @app.route('/logout')
 def logout():
+    app.logger.info(f'Logging out user {current_user.username}')
     logout_user()
     if session.get("user"): # Used MS Login
         # Wipe out user and its token cache from session
